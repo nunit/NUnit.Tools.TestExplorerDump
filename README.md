@@ -24,24 +24,24 @@ dotnet tool update -g NUnit.Tools.TestExplorerDump --add-source nupkg --prerelea
 ## Commands
 
 ```
-te-dump [dump] [<target>] [--expand-all] [--format text|json] [-s|--short]
+te-dump [dump] [<target>] [--expand-all] [--format text|json] [--out <folder>] [-s|--short]
 te-dump list
 te-dump start [<folder|.slnx|.sln|.csproj>]
 te-dump build [<target>]
 te-dump run [<target>] [--filter <search text>]
 te-dump close [<target>]
-te-dump session [<folder|.slnx|.sln|.csproj>] [--filter <search text>] [--format text|json]
+te-dump session [<folder|.slnx|.sln|.csproj>] [--filter <search text>] [--format text|json] [--out <folder>]
 ```
 
 | Command   | What it does                                                                                       |
 |-----------|----------------------------------------------------------------------------------------------------|
 | `dump`    | Print the Test Explorer tree. Default command.                                                     |
 | `list`    | List Visual Studio instances with Test Explorer open, numbered, and save the list.                |
-| `start`   | Start a new Visual Studio on the solution (default: current folder), open Test Explorer, wait for discovery, print the pid. |
-| `build`   | Build the solution and wait for test discovery.                                                    |
+| `start`   | Start a new Visual Studio on the solution (default: current folder), open Test Explorer, rebuild, wait for discovery, print the pid. |
+| `build`   | Rebuild the solution (clean and build) and wait for test discovery.                                |
 | `run`     | Run all tests, or the tests Test Explorer shows for `--filter`, and wait until done.              |
 | `close`   | Quit Visual Studio.                                                                                |
-| `session` | `start`, `build`, `dump`, `run`, `dump` again, `close`. Visual Studio is closed even if a step fails. |
+| `session` | `start` (with rebuild), `dump`, `run`, `dump` again, `close`. Visual Studio is closed even if a step fails. |
 
 A target picks the Visual Studio instance. Without one, the only instance with Test Explorer open
 is used.
@@ -57,11 +57,26 @@ is used.
 | `--expand-all` | Expand collapsed nodes before reading. This changes the Test Explorer view.                 |
 | `--format`     | `text` (default) or `json`.                                                                 |
 | `--filter`     | Test Explorer search text, for example `Class:"Class1"` or `FullName:"Ns.Class1.Test"`.     |
+| `--out`        | Folder for dump files. Default: a `te-dump` folder next to the solution.                    |
 | `-s, --short`  | Leave the usage text out of the instance list shown when several instances match.           |
 
 The list is saved to `%TEMP%\te-dump-instances.txt`, sorted by pid, so `te-dump 2` reads instance 2.
 
-Trees go to stdout. Progress and errors go to stderr.
+## Dump files
+
+`dump` and `session` write each tree to a file, by default in a `te-dump` folder next to the
+solution (change with `--out`):
+
+```
+<solution folder>	e-dump\<Solution>-<yyyyMMdd-HHmmss>-<snapshot>.txt
+```
+
+`<snapshot>` is `dump`, `discovered` or `after-run`. With `--format json` the extension is `.json`.
+Example: `Issue1408	e-dump\Issue1408-20261026-193512-after-run.txt`. The timestamp keeps
+earlier dumps, so a run before and after an adapter change can be diffed. Each file path is
+printed to stderr.
+
+Trees are also printed to stdout. Progress and errors go to stderr.
 Exit codes: 0 ok, 1 failure (no or several matching instances, timeout, build failed), 2 bad arguments.
 
 ## Examples

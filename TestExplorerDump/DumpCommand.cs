@@ -1,10 +1,10 @@
 namespace TestExplorerDump;
 
-public class DumpCommand(TestExplorerWindow window, ITreeFormatter formatter, TextWriter output) : ICommand
+public class DumpCommand(TestExplorerWindow window, DumpWriter dumpWriter, string solutionPath) : ICommand
 {
     public int Execute()
     {
-        formatter.Write(window.Read(), output);
+        dumpWriter.Write(solutionPath, [new TreeSnapshot("dump", window.Read())]);
         return 0;
     }
 }

@@ -14,6 +14,8 @@ public class JsonFormatter : ITreeFormatter
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
+    public string FileExtension => "json";
+
     public void Write(IReadOnlyList<TestNode> roots, TextWriter output) =>
         output.WriteLine(JsonSerializer.Serialize(roots, SerializerOptions));
 

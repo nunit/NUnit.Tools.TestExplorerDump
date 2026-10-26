@@ -20,6 +20,7 @@ try
     var locator = new TestExplorerLocator(new CUIAutomation8(), options);
     var registry = new DteRegistry();
     var launcher = new VisualStudioLauncher(registry, new SolutionLocator());
+    var dumpWriter = new DumpWriter(formatter, writers, options.Out);
     ICommand command = options.Command switch
     {
         Command.List => new ListCommand(locator, instanceList, writers.Out),
@@ -27,8 +28,8 @@ try
         Command.Build => new BuildCommand(registry.Get(locator.FindProcessId())),
         Command.Run => new RunCommand(registry.Get(locator.FindProcessId()), locator.OpenWindow(expandAll: false), options.Filter),
         Command.Close => new CloseCommand(registry.Get(locator.FindProcessId())),
-        Command.Session => new SessionCommand(launcher, locator, formatter, writers, options.Path!, options.Filter),
-        _ => new DumpCommand(locator.OpenWindow(options.ExpandAll), formatter, writers.Out),
+        Command.Session => new SessionCommand(launcher, locator, dumpWriter, writers, options.Path!, options.Filter),
+        _ => new DumpCommand(locator.OpenWindow(options.ExpandAll), dumpWriter, registry.Get(locator.FindProcessId()).SolutionPath),
     };
     return command.Execute();
 }

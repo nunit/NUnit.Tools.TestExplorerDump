@@ -4,7 +4,7 @@ public class BuildCommand(DteClient visualStudio) : ICommand
 {
     public int Execute()
     {
-        visualStudio.Build();
+        visualStudio.Rebuild();
         return 0;
     }
 }

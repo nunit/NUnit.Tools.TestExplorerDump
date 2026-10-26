@@ -3,8 +3,8 @@ using System.Diagnostics;
 namespace TestExplorerDump;
 
 /// <summary>
-/// Starts a fresh Visual Studio on a solution, so a newly built test adapter is loaded, and waits
-/// until Test Explorer is open and has discovered the tests.
+/// Starts a fresh Visual Studio on a solution, so a newly built test adapter is loaded, opens Test
+/// Explorer, rebuilds the solution and waits until the tests are discovered.
 /// </summary>
 public class VisualStudioLauncher(DteRegistry registry, SolutionLocator solutions)
 {
@@ -22,8 +22,8 @@ public class VisualStudioLauncher(DteRegistry registry, SolutionLocator solution
             visualStudio = registry.WaitFor(process.Id, StartTimeout);
             visualStudio.WaitForSolution();
             visualStudio.ShowTestExplorer();
-            progress.WriteLine($"Waiting for test discovery (pid {visualStudio.ProcessId})");
-            visualStudio.WaitForDiscovery();
+            progress.WriteLine($"Rebuilding and waiting for test discovery (pid {visualStudio.ProcessId})");
+            visualStudio.Rebuild();
             return visualStudio;
         }
         catch
