@@ -2,7 +2,7 @@ namespace TestExplorerDump;
 
 /// <summary>
 /// Text of the Visual Studio "Tests" output pane. Test Explorer writes a marker line when
-/// discovery and test runs start and end, so counting the markers tells when work is done.
+/// discovery and test runs start and end, so the markers tell when work is done.
 /// </summary>
 /// <remarks>
 /// End markers vary: "Test discovery finished: 6 Tests found", "Test discovery skipped: All test
@@ -11,13 +11,23 @@ namespace TestExplorerDump;
 /// </remarks>
 public record TestsPaneLog(string Text)
 {
-    public int DiscoveriesStarted => Count("========== Starting test discovery");
+    private const string DiscoveryStart = "========== Starting test discovery";
+    private const string DiscoveryEnd = "========== Test discovery ";
+    private const string RunEnd = "========== Test run ";
 
-    public int DiscoveriesFinished => Count("========== Test discovery ");
+    public int DiscoveriesStarted => Count(DiscoveryStart);
 
-    public int RunsFinished => Count("========== Test run ");
+    public int DiscoveriesFinished => Count(DiscoveryEnd);
 
-    public bool IsDiscovering => DiscoveriesStarted > DiscoveriesFinished;
+    public int RunsFinished => Count(RunEnd);
+
+    // Compares the last start with the last end, not the counts: a discovery that VS cancels can
+    // leave a start marker without an end, and counting would then report "discovering" forever.
+    public bool IsDiscovering => Text.LastIndexOf(DiscoveryStart, StringComparison.Ordinal) > Text.LastIndexOf(DiscoveryEnd, StringComparison.Ordinal);
+
+    /// <summary>The last "==========" line, for progress and error messages.</summary>
+    public string LastMarker =>
+        Text.Split('\n').Select(l => l.Trim()).LastOrDefault(l => l.StartsWith("==========", StringComparison.Ordinal)) ?? "(none)";
 
     private int Count(string marker)
     {

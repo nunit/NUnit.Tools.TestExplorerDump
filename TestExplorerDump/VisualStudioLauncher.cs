@@ -14,7 +14,9 @@ public class VisualStudioLauncher(DteRegistry registry, SolutionLocator solution
     {
         var solution = solutions.Find(path);
         progress.WriteLine($"Starting Visual Studio on {solution}");
-        var startInfo = new ProcessStartInfo(FindDevenv()) { ArgumentList = { solution } };
+        // UseShellExecute: VS must not inherit our stdout and stderr. A caller that reads our output through a pipe,
+        // like $(te-dump start) in bash, would otherwise wait until Visual Studio exits.
+        var startInfo = new ProcessStartInfo(FindDevenv()) { ArgumentList = { solution }, UseShellExecute = true };
         using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start devenv.exe.");
         DteClient? visualStudio = null;
         try

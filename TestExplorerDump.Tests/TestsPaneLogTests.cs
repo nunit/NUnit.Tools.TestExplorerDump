@@ -36,6 +36,25 @@ public class TestsPaneLogTests
     }
 
     [Test]
+    public void IsDiscovering_StartWithoutEndFollowedByCompleteDiscovery_IsFalse()
+    {
+        var log = new TestsPaneLog("""
+            ========== Starting test discovery ==========
+            ========== Starting test discovery ==========
+            ========== Test discovery finished: 6 Tests found in 3.4 sec ==========
+            """);
+
+        Assert.That(log.IsDiscovering, Is.False);
+    }
+
+    [Test]
+    public void LastMarker_ReturnsLastMarkerLine()
+    {
+        Assert.That(new TestsPaneLog(LoadThenRun + "\nsome adapter text").LastMarker,
+            Is.EqualTo("========== Test run finished: 4 Tests (4 Passed, 0 Failed, 0 Skipped) run in 393 ms =========="));
+    }
+
+    [Test]
     public void EmptyPane_CountsNothing()
     {
         var log = new TestsPaneLog("");

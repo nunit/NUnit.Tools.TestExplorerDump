@@ -6,13 +6,13 @@ using EnvDTE80;
 namespace TestExplorerDump;
 
 /// <summary>Finds a running Visual Studio through the DTE object it puts in the Running Object Table.</summary>
-public class DteRegistry
+public class DteRegistry(TextWriter progress)
 {
     private const string MonikerPrefix = "!VisualStudio.DTE.";
 
     public DteClient Get(int processId) =>
         Find(processId) is { } dte
-            ? new DteClient(processId, dte)
+            ? new DteClient(processId, dte, progress)
             : throw new InvalidOperationException($"No Visual Studio automation object for pid {processId}. Is it a running Visual Studio?");
 
     // A freshly started VS registers its DTE some seconds after the process starts.
@@ -22,7 +22,7 @@ public class DteRegistry
         while (timer.Elapsed < timeout)
         {
             if (Find(processId) is { } dte)
-                return new DteClient(processId, dte);
+                return new DteClient(processId, dte, progress);
             Thread.Sleep(1000);
         }
 

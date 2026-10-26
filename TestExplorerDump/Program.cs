@@ -11,14 +11,14 @@ if (!OperatingSystem.IsWindows())
 }
 
 var instanceList = new InstanceListFile(InstanceListFile.DefaultPath);
-var writers = new ConsoleWriters(Console.Out, Console.Error);
+var writers = new ConsoleWriters(Console.Out, new TimestampedWriter(Console.Error));
 Options? options = null;
 try
 {
     options = Options.Parse(args).ResolveNumber(instanceList);
     ITreeFormatter formatter = options.Format == OutputFormat.Json ? new JsonFormatter() : new TextFormatter();
     var locator = new TestExplorerLocator(new CUIAutomation8(), options);
-    var registry = new DteRegistry();
+    var registry = new DteRegistry(writers.Progress);
     var launcher = new VisualStudioLauncher(registry, new SolutionLocator());
     var dumpWriter = new DumpWriter(formatter, writers, options.Out);
     ICommand command = options.Command switch
