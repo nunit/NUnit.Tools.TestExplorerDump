@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- Plain net10.0, not net10.0-windows: PackAsTool rejects platform TFMs. UI Automation comes in through COM instead. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>te-dump</ToolCommandName>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)..\nupkg</PackageOutputPath>
+    <!-- Version comes from the git tag through MinVer, for example tag v1.0.0. -->
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <PackageId>NUnit.Tools.TestExplorerDump</PackageId>
+    <Authors>Terje Sandstrom</Authors>
+    <Copyright>Copyright (c) 2026 Terje Sandstrom</Copyright>
+    <Description>Internal NUnit tool: dumps the Visual Studio Test Explorer tree as text, and drives Visual Studio (start, build, run tests, close) for testing the NUnit VS adapter. Windows only.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/nunit/NUnit.Tools.TestExplorerDump</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nunit/NUnit.Tools.TestExplorerDump</RepositoryUrl>
+    <PackageTags>nunit;visualstudio;testexplorer;tool</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="envdte80" Version="17.14.40260" />
+    <PackageReference Include="Interop.UIAutomationClient" Version="10.19041.0" />
+    <PackageReference Include="MinVer" Version="8.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>
