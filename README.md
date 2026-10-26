@@ -1,12 +1,13 @@
-# NUnit.Tools.TestExplorerDump
+# te-dump: Test Explorer as text
 
-`te-dump` prints the Visual Studio Test Explorer tree as text, so an AI (or a diff) sees exactly
-what Test Explorer shows. It can also drive Visual Studio: start it on a solution, build, run all
-or some tests, and close it. Built for verifying changes to the NUnit VS adapter on small repro
-solutions.
+`te-dump` shows what the Visual Studio Test Explorer shows, as plain text. Use it to check how the
+NUnit VS adapter presents tests (the tree, the names, the outcomes) without screenshots, and to let
+an AI do the checking for you.
 
-It reads Test Explorer through Windows UI Automation and drives Visual Studio through EnvDTE.
-Nothing is installed into Visual Studio. Windows only.
+It can also drive Visual Studio for you: open a solution, rebuild, run all or some tests, and close
+it again.
+
+Windows only. Needs Visual Studio 2022 or later. Nothing is installed into Visual Studio.
 
 ## Install
 
@@ -14,116 +15,137 @@ Nothing is installed into Visual Studio. Windows only.
 dotnet tool install -g NUnit.Tools.TestExplorerDump
 ```
 
-From a local build, run from the repo root (pack writes to `nupkg/`):
+Update later with `dotnet tool update -g NUnit.Tools.TestExplorerDump`.
+Check the installed version with `te-dump --version`.
+
+## Quick start
+
+Open a terminal in a repro folder (one with a `.slnx`, `.sln` or `.csproj`) and run:
 
 ```
-dotnet pack TestExplorerDump -c Release
-dotnet tool update -g NUnit.Tools.TestExplorerDump --add-source nupkg --prerelease
+te-dump session
 ```
 
-## Commands
+This starts a new Visual Studio, rebuilds, prints the tree Test Explorer shows after discovery,
+runs all tests, prints the tree again, and closes Visual Studio. It takes a minute or two.
 
 ```
-te-dump [dump] [<target>] [--expand-all] [--format text|json] [--out <folder>] [-s|--short]
-te-dump list
-te-dump start [<folder|.slnx|.sln|.csproj>]
-te-dump build [<target>]
-te-dump run [<target>] [--filter <search text>]
-te-dump close [<target>]
-te-dump session [<folder|.slnx|.sln|.csproj>] [--filter <search text>] [--format text|json] [--out <folder>]
-```
-
-| Command   | What it does                                                                                       |
-|-----------|----------------------------------------------------------------------------------------------------|
-| `dump`    | Print the Test Explorer tree. Default command.                                                     |
-| `list`    | List Visual Studio instances with Test Explorer open, numbered, and save the list.                |
-| `start`   | Start a new Visual Studio on the solution (default: current folder), open Test Explorer, rebuild, wait for discovery, print the pid. |
-| `build`   | Rebuild the solution (clean and build) and wait for test discovery.                                |
-| `run`     | Run all tests, or the tests Test Explorer shows for `--filter`, and wait until done.              |
-| `close`   | Quit Visual Studio.                                                                                |
-| `session` | `start` (with rebuild), `dump`, `run`, `dump` again, `close`. Visual Studio is closed even if a step fails. |
-
-A target picks the Visual Studio instance. Without one, the only instance with Test Explorer open
-is used.
-
-| Target           | Meaning                                                    |
-|------------------|------------------------------------------------------------|
-| `<number>`       | Instance number from the last `te-dump list`.              |
-| `--pid <id>`     | Process id of the `devenv.exe`.                            |
-| `--title <text>` | Part of the window title, usually the solution name.       |
-
-| Option         | Meaning                                                                                     |
-|----------------|---------------------------------------------------------------------------------------------|
-| `--expand-all` | Expand collapsed nodes before reading. This changes the Test Explorer view.                 |
-| `--format`     | `text` (default) or `json`.                                                                 |
-| `--filter`     | Test Explorer search text, for example `Class:"Class1"` or `FullName:"Ns.Class1.Test"`.     |
-| `--out`        | Folder for dump files. Default: a `te-dump` folder next to the solution.                    |
-| `-s, --short`  | Leave the usage text out of the instance list shown when several instances match.           |
-
-The list is saved to `%TEMP%\te-dump-instances.txt`, sorted by pid, so `te-dump 2` reads instance 2.
-
-## Dump files
-
-`dump` and `session` write each tree to a file, by default in a `te-dump` folder next to the
-solution (change with `--out`):
-
-```
-<solution folder>	e-dump\<Solution>-<yyyyMMdd-HHmmss>-<snapshot>.txt
-```
-
-`<snapshot>` is `dump`, `discovered` or `after-run`. With `--format json` the extension is `.json`.
-Example: `Issue1408	e-dump\Issue1408-20261026-193512-after-run.txt`. The timestamp keeps
-earlier dumps, so a run before and after an adapter change can be diffed. Each file path is
-printed to stderr.
-
-Trees are also printed to stdout. Progress and errors go to stderr.
-Exit codes: 0 ok, 1 failure (no or several matching instances, timeout, build failed), 2 bad arguments.
-
-## Examples
-
-Full round trip in a repro folder:
-
-```
-> cd Issue489
-> te-dump session
 # discovered
-Project: Issue489 [Not Run] (9)
-  Namespace: NUnitSetName [Not Run] (9)
-    Class: Class1 [Not Run] (9)
-      SimpleTest [Not Run]
-      ...
+Project: Issue1408 [Not Run] (3)
+  Namespace: NUnitTestExplorerFailure [Not Run] (3)
+    Class: Tests [Not Run] (3)
+      Test Group: Demonstration [Not Run] (2)
+        Demonstration([(0, 0)]) [Not Run]
+        Demonstration([(1, 2), (3, 4)]) [Not Run]
+      Demonstration [Not Run]
 
 # after run
-Project: Issue489 [Passed] (9)
+Project: Issue1408 [Passed] (3)
   ...
 ```
 
-Step by step, keeping Visual Studio open for more checks:
+Each line is `Kind: Name [Outcome] (test count)`. Leaf tests have no kind and no count.
+
+## What you can do
+
+### Look at a Visual Studio you already have open
 
 ```
-> te-dump start
-Started Visual Studio, pid 73760. Use --pid 73760 with the other commands.
-> te-dump --pid 73760 --expand-all
-> te-dump run --pid 73760 --filter SimpleTest
-> te-dump --pid 73760 --expand-all
-> te-dump close --pid 73760
+te-dump                    Print the tree of the only Visual Studio with Test Explorer open
+te-dump list               List all of them, numbered
+te-dump 2                  Print the tree of number 2 from that list
+te-dump --title Issue489   Pick by window title instead
+te-dump 2 --expand-all     Expand collapsed nodes first, so nothing is hidden
 ```
 
-Each tree line is `Kind: Name [Outcome] (test count)`. Leaf tests have no kind and no count.
+### Run one full check
 
-## Limits
+```
+te-dump session                        In the current folder
+te-dump session C:\repos\Issue1408     Or give a folder, .slnx, .sln or .csproj
+te-dump session --filter SimpleTest    Run only some tests
+```
 
-- `start` and `session` use the latest stable Visual Studio that `vswhere` finds.
-- Outcomes before a run can come from an earlier run: Visual Studio keeps results in its `.vs` folder.
-- Without `--expand-all`, `dump` leaves out children of collapsed nodes. `session` always expands.
-- Kind and outcome texts are Visual Studio UI texts, so they follow the Visual Studio display language.
-- Durations are left out on purpose, so two dumps can be diffed.
+### Work step by step, keeping Visual Studio open
 
-## Release
+Use this when you want to run several tests one at a time, or look at the tree between runs.
 
-Versions come from git tags through [MinVer](https://github.com/adamralph/minver).
-Tag the commit (for example `v1.0.0`), push the tag, then run the
-`TestExplorerDump.NuGet.Publish` workflow on that tag.
+```
+te-dump start                              Prints: Started Visual Studio, pid 73760. ...
+te-dump --pid 73760 --expand-all           Print the tree
+te-dump run --pid 73760 --filter SimpleTest
+te-dump --pid 73760 --expand-all           Print it again
+te-dump build --pid 73760                  Rebuild after changing the repro or the adapter
+te-dump run --pid 73760                    Run all tests
+te-dump close --pid 73760                  Close Visual Studio
+```
+
+Keep the pid that `start` prints. All later commands take it with `--pid`.
+
+## Commands
+
+| Command   | What it does                                                                                       |
+|-----------|----------------------------------------------------------------------------------------------------|
+| `dump`    | Print the Test Explorer tree. This is the default, so `te-dump` alone means `te-dump dump`.       |
+| `list`    | List Visual Studio instances with Test Explorer open, numbered.                                    |
+| `start`   | Start a new Visual Studio on a solution, open Test Explorer, rebuild, wait for discovery, print the pid. |
+| `build`   | Rebuild the solution and wait for test discovery.                                                  |
+| `run`     | Run all tests, or the tests matching `--filter`, and wait until done.                             |
+| `close`   | Close Visual Studio.                                                                               |
+| `session` | `start`, `dump`, `run`, `dump` again, `close`. Visual Studio is closed even if a step fails.       |
+
+`start` and `session` always rebuild. Discovery only happens after a build that changes the test
+assemblies, so a rebuild is the only way to be sure Test Explorer shows the current code.
+
+## Choosing a Visual Studio
+
+`dump`, `build`, `run` and `close` work on the only Visual Studio with Test Explorer open. When
+there are several, pick one:
+
+| Option           | Meaning                                                    |
+|------------------|------------------------------------------------------------|
+| `<number>`       | Number from the last `te-dump list`.                       |
+| `--pid <id>`     | Process id, as printed by `start`.                         |
+| `--title <text>` | Part of the window title, usually the solution name.       |
+
+## Options
+
+| Option               | Meaning                                                                                |
+|----------------------|----------------------------------------------------------------------------------------|
+| `--expand-all`       | Expand collapsed nodes before reading. This changes the view in Visual Studio.         |
+| `--filter <text>`    | Test Explorer search text, as typed in its search box. Example: `SimpleTest`.          |
+| `--format json`      | JSON instead of text.                                                                  |
+| `--out <folder>`     | Where to write dump files. Default: a `te-dump` folder next to the solution.           |
+| `-s`, `--short`      | Leave the help text out when several instances match.                                  |
+| `--help`, `-h`, `-?` | Show the help.                                                                         |
+| `--version`          | Show the version.                                                                      |
+| `--readme`           | Open this page in Microsoft Edge.                                                      |
+
+## Dump files
+
+`dump` and `session` also save each tree to a file:
+
+```
+<solution folder>\te-dump\<Solution>-<yyyyMMdd-HHmmss>-<snapshot>.txt
+```
+
+`<snapshot>` is `dump`, `discovered` or `after-run`. Example:
+`Issue1408\te-dump\Issue1408-20261026-193445-after-run.txt`. Older files are kept, so you can diff
+a run before and after an adapter change. Add `te-dump/` to the repo's `.gitignore`.
+
+## Good to know
+
+- Trees go to stdout, progress and errors to stderr. Exit code 0 is success, 1 is failure,
+  2 is a wrong argument.
+- `start` and `session` use the newest stable Visual Studio installed.
+- Before a run, outcomes can come from an earlier run. Visual Studio remembers them in its `.vs` folder.
+- Without `--expand-all`, `dump` leaves out the children of collapsed nodes. `session` always expands.
+- Kinds and outcomes are Visual Studio's own texts, so they follow its display language.
+- Durations are left out on purpose, so dumps can be diffed.
+
+## For developers
+
+Building, testing and releasing the tool: see [BUILDING.md](BUILDING.md).
 
 ## License
 
