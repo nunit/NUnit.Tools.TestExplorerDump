@@ -46,6 +46,54 @@ Project: Issue1408 [Passed] (3)
 
 Each line is `Kind: Name [Outcome] (test count)`. Leaf tests have no kind and no count.
 
+Both trees are also saved as files in a `te-dump` folder next to the solution, see [Dump files](#dump-files).
+
+## Dump files
+
+Every tree te-dump prints is also saved to a file, so you can keep it, diff it, or hand it to an AI.
+
+### Where they go
+
+By default in a `te-dump` folder next to the solution (the `.slnx`, `.sln` or `.csproj`):
+
+```
+C:\repos\nunit3-vs-adapter.issues\Issue1408\Issue1408.slnx
+C:\repos\nunit3-vs-adapter.issues\Issue1408\te-dump\          <- dump files
+```
+
+The folder is created when needed. Each file path is printed on stderr as `Wrote <path>`.
+
+### What they are called
+
+```
+<Solution>-<yyyyMMdd-HHmmss>-<snapshot>.txt
+```
+
+| Command   | Files written                                                                  |
+|-----------|--------------------------------------------------------------------------------|
+| `dump`    | `Issue1408-20261026-193445-dump.txt`                                           |
+| `session` | `Issue1408-20261026-193445-discovered.txt` and `Issue1408-20261026-193445-after-run.txt` |
+
+- `<Solution>` is the solution file name without extension.
+- The timestamp is when the files were written. Both files of one `session` share it.
+- With `--format json` the files end in `.json` instead of `.txt`.
+- Older files are never overwritten, so a run before and after an adapter change can be diffed:
+  `diff te-dump\Issue1408-20261026-193445-after-run.txt te-dump\Issue1408-20261026-201530-after-run.txt`
+- `start`, `build`, `run`, `close` and `list` write no files.
+
+### Putting them somewhere else
+
+Use `--out <folder>` with `dump` or `session`:
+
+```
+te-dump session --out C:\temp\dumps
+te-dump --pid 73760 --expand-all --out ..\results
+```
+
+A relative folder is relative to the current directory. The same file names are used.
+
+Add `te-dump/` to the repo's `.gitignore` if you keep the default folder.
+
 ## What you can do
 
 ### Look at a Visual Studio you already have open
@@ -120,18 +168,6 @@ there are several, pick one:
 | `--help`, `-h`, `-?` | Show the help.                                                                         |
 | `--version`          | Show the version.                                                                      |
 | `--readme`           | Open this page in Microsoft Edge.                                                      |
-
-## Dump files
-
-`dump` and `session` also save each tree to a file:
-
-```
-<solution folder>\te-dump\<Solution>-<yyyyMMdd-HHmmss>-<snapshot>.txt
-```
-
-`<snapshot>` is `dump`, `discovered` or `after-run`. Example:
-`Issue1408\te-dump\Issue1408-20261026-193445-after-run.txt`. Older files are kept, so you can diff
-a run before and after an adapter change. Add `te-dump/` to the repo's `.gitignore`.
 
 ## Good to know
 
