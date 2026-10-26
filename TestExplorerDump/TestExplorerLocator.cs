@@ -13,7 +13,8 @@ public class TestExplorerLocator(IUIAutomation automation, Options options)
 
     public TestExplorerWindow OpenWindow(bool expandAll) => new(automation, this, expandAll);
 
-    public int FindProcessId() => FindOne().Instance.ProcessId;
+    // An explicit pid needs no lookup, so build, run and close also work while Test Explorer is closed.
+    public int FindProcessId() => options.ProcessId ?? FindOne().Instance.ProcessId;
 
     public IReadOnlyList<TestExplorerPane> FindAll()
     {

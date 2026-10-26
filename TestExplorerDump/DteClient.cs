@@ -25,9 +25,10 @@ public class DteClient(int processId, DTE2 dte)
 
     public void ShowTestExplorer() => Retry(() => dte.ExecuteCommand("TestExplorer.ShowTestExplorer"));
 
-    // Test Explorer discovers tests when the solution loads.
+    // Test Explorer discovers tests when the solution loads, but only if there are built test assemblies.
+    // A solution that was never built gets no discovery until the first build.
     public void WaitForDiscovery() =>
-        WaitFor((log, _) => log.DiscoveriesFinished > 0 && !log.IsDiscovering, "test discovery");
+        WaitFor((log, elapsed) => (log.DiscoveriesStarted > 0 || elapsed > DiscoveryStartGrace) && !log.IsDiscovering, "test discovery");
 
     public void Build()
     {
