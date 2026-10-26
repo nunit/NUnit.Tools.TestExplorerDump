@@ -57,6 +57,14 @@ public class OptionsTests
     [TestCase("close", ExpectedResult = Command.Close)]
     public Command Parse_CommandName_ReturnsCommand(string name) => Options.Parse([name]).Command;
 
+    [TestCase("--help", ExpectedResult = Command.Help)]
+    [TestCase("-h", ExpectedResult = Command.Help)]
+    [TestCase("-?", ExpectedResult = Command.Help)]
+    [TestCase("--version", ExpectedResult = Command.Version)]
+    [TestCase("--readme", ExpectedResult = Command.Readme)]
+    [TestCase("run", "--bogus", "-h", ExpectedResult = Command.Help)]
+    public Command Parse_InfoFlag_WinsOverOtherArguments(params string[] args) => Options.Parse(args).Command;
+
     [Test]
     public void Parse_RunWithTargetAndFilter_ReturnsThem()
     {

@@ -9,4 +9,7 @@ public enum Command
     Run,
     Close,
     Session,
+    Help,
+    Version,
+    Readme,
 }

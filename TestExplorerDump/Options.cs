@@ -23,6 +23,9 @@ public record Options(
           te-dump run [<target>] [--filter <search text>]
           te-dump close [<target>]
           te-dump session [<folder|.slnx|.sln|.csproj>] [--filter <search text>] [--format text|json] [--out <folder>]
+          te-dump --help | -h | -?        Show this help.
+          te-dump --version               Show the version.
+          te-dump --readme                Open the README on GitHub in Microsoft Edge.
 
         Commands:
           dump          Print the Test Explorer tree. Default command.
@@ -52,6 +55,10 @@ public record Options(
 
     public static Options Parse(IReadOnlyList<string> args)
     {
+        // Help, version and readme win over everything else, so they also work after a wrong argument.
+        if (args.Select(InfoCommand).FirstOrDefault(c => c is not null) is { } info)
+            return new Options(null, null, false, OutputFormat.Text, Command: info);
+
         var command = args.Count > 0 ? ParseCommand(args[0]) : null;
         int? processId = null;
         string? title = null;
@@ -125,6 +132,14 @@ public record Options(
         if (Out is not null && Command is not (Command.Dump or Command.Session))
             throw new ArgumentException("--out only works with dump and session.");
     }
+
+    private static Command? InfoCommand(string value) => value switch
+    {
+        "--help" or "-h" or "-?" => Command.Help,
+        "--version" => Command.Version,
+        "--readme" => Command.Readme,
+        _ => null,
+    };
 
     private static Command? ParseCommand(string value) => value switch
     {

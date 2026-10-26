@@ -23,6 +23,9 @@ try
     var dumpWriter = new DumpWriter(formatter, writers, options.Out);
     ICommand command = options.Command switch
     {
+        Command.Help => new HelpCommand(writers.Out),
+        Command.Version => new VersionCommand(writers.Out),
+        Command.Readme => new ReadmeCommand(writers.Out),
         Command.List => new ListCommand(locator, instanceList, writers.Out),
         Command.Start => new StartCommand(launcher, options.Path!, writers),
         Command.Build => new BuildCommand(registry.Get(locator.FindProcessId())),
